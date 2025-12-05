@@ -11,6 +11,7 @@
 #define TASK_REMOVE 21370 // Task ID for removing filter
 
 new bool:g_bFilterActive = false // Track if filter is currently active
+new bool:g_bTriggeredToday = false // Track if auto-trigger already happened today
 
 public plugin_precache() {
     // Precache MP3 file so clients download it from the server
@@ -22,34 +23,14 @@ public plugin_precache() {
 public plugin_init() {
     register_plugin(PLUGIN, VERSION, AUTHOR)
     register_concmd("papaj", "cmd_papaj")
+
+    // Check time every 30 seconds for auto-trigger at 21:37
+    set_task(30.0, "check_time", 2138, "", 0, "b")
 }
 
 public cmd_papaj(id) {
-    // Get player name who activated the command
-    new name[32]
-    get_user_name(id, name, 31)
-
-    // Mark filter as active
-    g_bFilterActive = true
-
-    // Apply yellow filter to all players
-    apply_yellow_filter()
-
-    // Play MP3 sound to all players
-    new players[32], num
-    get_players(players, num, "a")
-    for(new i = 0; i < num; i++) {
-        client_cmd(players[i], "mp3 play sound/%s", SOUND_FILE)
-    }
-
-    // Set repeating task to maintain filter every 0.5 seconds (to survive round restarts)
-    set_task(0.5, "maintain_yellow_filter", TASK_MAINTAIN, "", 0, "b")
-
-    // Set timer to remove filter after 60 seconds
-    set_task(FILTER_DURATION, "remove_yellow_filter", TASK_REMOVE)
-
-    // Notify all players
-    client_print(0, print_chat, "[Papaj] Papieski czas, kremowki w dlon!")
+    // Trigger the papaj effect
+    trigger_papaj_effect()
 
     return PLUGIN_HANDLED
 }
@@ -83,6 +64,55 @@ public maintain_yellow_filter() {
     if(g_bFilterActive) {
         apply_yellow_filter()
     }
+}
+
+public check_time() {
+    // Get current time
+    new hour, minute, second
+    time(hour, minute, second)
+
+    // Check if it's 21:37
+    if(hour == 21 && minute == 37) {
+        // Only trigger once per day
+        if(!g_bTriggeredToday) {
+            g_bTriggeredToday = true
+
+            // Trigger the papaj effect automatically
+            trigger_papaj_effect()
+
+            // Log the automatic trigger
+            log_amx("Papaj effect auto-triggered at 21:37")
+        }
+    } else {
+        // Reset the flag after 21:37 passes
+        if(hour != 21 || minute != 37) {
+            g_bTriggeredToday = false
+        }
+    }
+}
+
+public trigger_papaj_effect() {
+    // Mark filter as active
+    g_bFilterActive = true
+
+    // Apply yellow filter to all players
+    apply_yellow_filter()
+
+    // Play MP3 sound to all players
+    new players[32], num
+    get_players(players, num, "a")
+    for(new i = 0; i < num; i++) {
+        client_cmd(players[i], "mp3 play sound/%s", SOUND_FILE)
+    }
+
+    // Set repeating task to maintain filter every 0.5 seconds (to survive round restarts)
+    set_task(0.5, "maintain_yellow_filter", TASK_MAINTAIN, "", 0, "b")
+
+    // Set timer to remove filter after 60 seconds
+    set_task(FILTER_DURATION, "remove_yellow_filter", TASK_REMOVE)
+
+    // Notify all players
+    client_print(0, print_chat, "[Papaj] Papieski czas, kremowki w dlon!")
 }
 
 public remove_yellow_filter() {
