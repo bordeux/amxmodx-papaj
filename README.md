@@ -94,7 +94,18 @@ Edit these constants in `papaj.sma` before compiling:
 - **Filter opacity:** 100/255 (semi-transparent)
 - **Maintenance interval:** 0.5 seconds (to survive round restarts)
 - **Time check interval:** 30 seconds
+- **Console command:** `papaj2137` (hidden from chat)
 - **Works with:** All Counter-Strike 1.6 servers running AMX Mod X
+
+### MP3 Playback Limitations
+
+**Important:** The Half-Life/GoldSrc engine can only play **one MP3 per client at a time**. This means:
+
+- If another plugin is playing MP3 music, this plugin will stop it
+- If this plugin is playing, another plugin can stop it
+- Multiple MP3s cannot be mixed or played simultaneously
+
+This is an engine limitation and cannot be bypassed. If you need background music that doesn't interfere with other plugins, consider using WAV files with `emit_sound()` instead (though WAV files are much larger).
 
 ## Troubleshooting
 
