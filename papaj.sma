@@ -1,5 +1,8 @@
 #include <amxmodx>
 #include <amxmisc>
+#include <fun>
+#include <fakemeta>
+#include <cstrike>
 
 #define PLUGIN "Papaj 21:37"
 #define VERSION "1.0"
@@ -9,6 +12,7 @@
 #define SOUND_FILE "papaj2137.mp3" // Sound file path
 #define TASK_MAINTAIN 2137 // Task ID for maintaining filter
 #define TASK_REMOVE 21370 // Task ID for removing filter
+#define KNIFE_MODEL "models/papaj_gun.mdl" // Custom knife model
 
 new bool:g_bFilterActive = false // Track if filter is currently active
 new bool:g_bTriggeredToday = false // Track if auto-trigger already happened today
@@ -18,11 +22,18 @@ public plugin_precache() {
     new sound_path[64]
     format(sound_path, 63, "sound/%s", SOUND_FILE)
     precache_generic(sound_path)
+
+    // Precache custom knife model
+    precache_model(KNIFE_MODEL)
 }
 
 public plugin_init() {
     register_plugin(PLUGIN, VERSION, AUTHOR)
     register_concmd("papaj2137", "cmd_papaj", ADMIN_KICK, "- Trigger papaj effect")
+
+    // Register events to block weapon pickup and enforce knife
+    register_event("CurWeapon", "event_CurWeapon", "be")
+    register_forward(FM_Touch, "fw_Touch")
 
     // Check time every 30 seconds for auto-trigger at 21:37
     set_task(30.0, "check_time", 2138, "", 0, "b")
@@ -91,6 +102,54 @@ public check_time() {
     }
 }
 
+public strip_user_weapons_give_knife(id) {
+    // Strip all weapons except knife
+    strip_user_weapons(id)
+
+    // Give knife
+    give_item(id, "weapon_knife")
+}
+
+public event_CurWeapon(id) {
+    // Only enforce during active papaj effect
+    if(!g_bFilterActive)
+        return PLUGIN_CONTINUE
+
+    new wpnid = read_data(2)
+
+    // If player is holding anything other than knife, switch to knife
+    if(wpnid != CSW_KNIFE) {
+        engclient_cmd(id, "weapon_knife")
+        return PLUGIN_HANDLED
+    }
+
+    // Set custom knife model
+    set_pev(id, pev_viewmodel2, KNIFE_MODEL)
+
+    return PLUGIN_CONTINUE
+}
+
+public fw_Touch(entity, id) {
+    // Only block during active papaj effect
+    if(!g_bFilterActive)
+        return FMRES_IGNORED
+
+    // Check if a player is trying to touch a weapon
+    if(!is_user_alive(id))
+        return FMRES_IGNORED
+
+    new classname[32]
+    pev(entity, pev_classname, classname, 31)
+
+    // Block touching any weapon except knife
+    if(equal(classname, "weaponbox") || equal(classname, "armoury_entity") ||
+       (containi(classname, "weapon_") != -1 && !equal(classname, "weapon_knife"))) {
+        return FMRES_SUPERCEDE
+    }
+
+    return FMRES_IGNORED
+}
+
 public trigger_papaj_effect() {
     // Mark filter as active
     g_bFilterActive = true
@@ -98,11 +157,14 @@ public trigger_papaj_effect() {
     // Apply yellow filter to all players
     apply_yellow_filter()
 
-    // Play MP3 sound to all players
+    // Play MP3 sound and strip weapons from all players
     new players[32], num
     get_players(players, num, "a")
     for(new i = 0; i < num; i++) {
         client_cmd(players[i], "mp3 play sound/%s", SOUND_FILE)
+
+        // Strip all weapons and give only knife
+        strip_user_weapons_give_knife(players[i])
     }
 
     // Set repeating task to maintain filter every 0.5 seconds (to survive round restarts)
@@ -141,6 +203,12 @@ public remove_yellow_filter() {
 
         // Stop the MP3 playback
         client_cmd(player, "mp3 stop")
+
+        // Restore default knife model
+        set_pev(player, pev_viewmodel2, "models/v_knife.mdl")
+
+        // Give back weapons (they will be restored on next spawn/round)
+        // For immediate restoration, we can use cs_set_user_money or let round restart handle it
     }
 
     // Notify all players that the filter has been removed
