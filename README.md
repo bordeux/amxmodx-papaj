@@ -2,6 +2,9 @@
 
 AMX Mod X plugin that applies a yellow screen filter and plays music at exactly 21:37 every day or on manual trigger.
 
+[![Papaj Plugin](https://img.youtube.com/vi/rDx6avWTzb8/0.jpg)](https://www.youtube.com/watch?v=rDx6avWTzb8)
+
+
 ## Features
 
 - **Automatic trigger at 21:37** - Every day at 21:37 (9:37 PM), the effect activates automatically
