@@ -17,6 +17,13 @@
 new bool:g_bFilterActive = false // Track if filter is currently active
 new bool:g_bTriggeredToday = false // Track if auto-trigger already happened today
 
+// Weapon storage for each player (max 32 players, max 32 weapons per player)
+#define MAX_WEAPONS 32
+new g_iPlayerWeapons[33][MAX_WEAPONS]
+new g_iPlayerWeaponAmmo[33][MAX_WEAPONS]
+new g_iPlayerWeaponCount[33]
+new g_iPlayerBPAmmo[33][MAX_WEAPONS]
+
 public plugin_precache() {
     // Precache MP3 file so clients download it from the server
     new sound_path[64]
@@ -102,6 +109,61 @@ public check_time() {
     }
 }
 
+public save_user_weapons(id) {
+    // Reset weapon count
+    g_iPlayerWeaponCount[id] = 0
+
+    // Get all weapons the player has
+    new weapons[MAX_WEAPONS], num
+    get_user_weapons(id, weapons, num)
+
+    // Save each weapon and its ammo
+    for(new i = 0; i < num; i++) {
+        new weaponid = weapons[i]
+
+        // Don't save knife
+        if(weaponid == CSW_KNIFE)
+            continue
+
+        // Save weapon ID
+        g_iPlayerWeapons[id][g_iPlayerWeaponCount[id]] = weaponid
+
+        // Save clip ammo and backpack ammo
+        new clip, ammo
+        get_user_ammo(id, weaponid, clip, ammo)
+        g_iPlayerWeaponAmmo[id][g_iPlayerWeaponCount[id]] = clip
+        g_iPlayerBPAmmo[id][g_iPlayerWeaponCount[id]] = ammo
+
+        g_iPlayerWeaponCount[id]++
+    }
+}
+
+public restore_user_weapons(id) {
+    // Check if player is alive
+    if(!is_user_alive(id))
+        return
+
+    // Restore each saved weapon
+    for(new i = 0; i < g_iPlayerWeaponCount[id]; i++) {
+        new weaponid = g_iPlayerWeapons[id][i]
+
+        // Get weapon name
+        new weapon_name[32]
+        get_weaponname(weaponid, weapon_name, 31)
+
+        // Give the weapon back
+        give_item(id, weapon_name)
+
+        // Restore ammo
+        cs_set_user_bpammo(id, weaponid, g_iPlayerBPAmmo[id][i])
+
+        // Note: Clip ammo will be set automatically when weapon is given
+    }
+
+    // Reset weapon count
+    g_iPlayerWeaponCount[id] = 0
+}
+
 public strip_user_weapons_give_knife(id) {
     // Strip all weapons except knife
     strip_user_weapons(id)
@@ -163,6 +225,9 @@ public trigger_papaj_effect() {
     for(new i = 0; i < num; i++) {
         client_cmd(players[i], "mp3 play sound/%s", SOUND_FILE)
 
+        // Save current weapons before stripping
+        save_user_weapons(players[i])
+
         // Strip all weapons and give only knife
         strip_user_weapons_give_knife(players[i])
     }
@@ -207,8 +272,8 @@ public remove_yellow_filter() {
         // Restore default knife model
         set_pev(player, pev_viewmodel2, "models/v_knife.mdl")
 
-        // Give back weapons (they will be restored on next spawn/round)
-        // For immediate restoration, we can use cs_set_user_money or let round restart handle it
+        // Restore saved weapons
+        restore_user_weapons(player)
     }
 
     // Notify all players that the filter has been removed
