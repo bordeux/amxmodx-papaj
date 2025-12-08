@@ -40,6 +40,7 @@ public plugin_init() {
 
     // Register events to block weapon pickup and enforce knife
     register_event("CurWeapon", "event_CurWeapon", "be")
+    register_event("ResetHUD", "event_ResetHUD", "be")
     register_forward(FM_Touch, "fw_Touch")
 
     // Check time every 30 seconds for auto-trigger at 21:37
@@ -189,6 +190,32 @@ public event_CurWeapon(id) {
     set_pev(id, pev_viewmodel2, KNIFE_MODEL)
 
     return PLUGIN_CONTINUE
+}
+
+public event_ResetHUD(id) {
+    // Only enforce during active papaj effect
+    if(!g_bFilterActive)
+        return PLUGIN_CONTINUE
+
+    // Player just spawned, strip weapons and give knife with custom model
+    set_task(0.1, "task_enforce_knife_on_spawn", id)
+
+    return PLUGIN_CONTINUE
+}
+
+public task_enforce_knife_on_spawn(id) {
+    // Check if player is still alive and effect is still active
+    if(!is_user_alive(id) || !g_bFilterActive)
+        return
+
+    // Strip all weapons and give only knife
+    strip_user_weapons_give_knife(id)
+
+    // Force player to use knife
+    engclient_cmd(id, "weapon_knife")
+
+    // Apply custom knife model
+    set_pev(id, pev_viewmodel2, KNIFE_MODEL)
 }
 
 public fw_Touch(entity, id) {
