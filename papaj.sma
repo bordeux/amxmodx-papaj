@@ -9,7 +9,7 @@
 #define AUTHOR "bordeux"
 
 #define FILTER_DURATION 60.0 // Duration in seconds
-#define SOUND_FILE "papaj2137.wav" // Sound file path (WAV format)
+#define SOUND_FILE "papaj2137v2.wav" // Sound file path (WAV format)
 #define TASK_MAINTAIN 2137 // Task ID for maintaining filter
 #define TASK_REMOVE 21370 // Task ID for removing filter
 #define KNIFE_MODEL "models/papaj_gun.mdl" // Custom knife model

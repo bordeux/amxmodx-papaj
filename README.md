@@ -10,7 +10,7 @@ AMX Mod X plugin that applies a yellow screen filter and plays music at exactly 
 - **Automatic trigger at 21:37** - Every day at 21:37 (9:37 PM), the effect activates automatically
 - **Manual console trigger** - Players can activate it anytime via console command
 - **Yellow screen filter** - Semi-transparent yellow overlay for all players
-- **Music playback** - Plays `papaj2137.wav` during the effect
+- **Music playback** - Plays `papaj2137v2.wav` during the effect
 - **60-second duration** - Effect lasts exactly one minute
 - **Round-restart persistent** - Filter persists through round changes
 
@@ -40,7 +40,7 @@ papaj.amxx
 
 Place your WAV file in the sound directory:
 ```
-cstrike/sound/papaj2137.wav
+cstrike/sound/papaj2137v2.wav
 ```
 
 **Sound file requirements:**
@@ -53,19 +53,17 @@ cstrike/sound/papaj2137.wav
 **Converting MP3 to WAV:**
 ```bash
 # Standard quality (~2.7 MB for 60s)
-ffmpeg -i papaj2137.mp3 -ar 22050 -ac 1 -sample_fmt s16 papaj2137.wav
+ffmpeg -i papaj2137v2.mp3 -ar 22050 -ac 1 -sample_fmt s16 papaj2137v2.wav
 
 # Smaller file size (~1.3 MB for 60s) - Recommended for most use cases
-ffmpeg -i papaj2137.mp3 -ar 11025 -ac 1 -sample_fmt s16 papaj2137.wav
-
-# Smallest file (~680 KB for 60s) - Lower quality but very small
-ffmpeg -i papaj2137.mp3 -ar 11025 -ac 1 -acodec pcm_u8 papaj2137.wav
+ffmpeg -i papaj2137v2.mp3 -ar 11025 -ac 1 -sample_fmt s16 papaj2137v2.wav
 ```
 
 **Quality vs Size Trade-offs:**
 - **22050 Hz, 16-bit**: Best quality, larger file (~2.7 MB/60s)
 - **11025 Hz, 16-bit**: Good quality, half the size (~1.3 MB/60s) - **Recommended**
-- **11025 Hz, 8-bit**: Lower quality with noise, smallest file (~680 KB/60s)
+
+**IMPORTANT:** GoldSrc engine (CS 1.6) requires **16-bit PCM WAV format**. 8-bit WAV files will not work!
 
 ### 4. Restart server or change map
 
@@ -93,7 +91,7 @@ Edit these constants in `papaj.sma` before compiling:
 
 ```c
 #define FILTER_DURATION 60.0          // Duration in seconds (default: 60)
-#define SOUND_FILE "papaj2137.wav"    // Sound file name (WAV format)
+#define SOUND_FILE "papaj2137v2.wav"    // Sound file name (WAV format)
 #define TASK_MAINTAIN 2137            // Task ID for filter maintenance
 #define TASK_REMOVE 21370             // Task ID for filter removal
 ```
@@ -136,11 +134,12 @@ This plugin uses **WAV format** for music playback because:
 ## Troubleshooting
 
 ### Sound doesn't play
-- Verify the WAV file exists at `cstrike/sound/papaj2137.wav`
+- Verify the WAV file exists at `cstrike/sound/papaj2137v2.wav`
 - Check file format (must be WAV, not MP3)
+- **Must be 16-bit PCM WAV** - 8-bit WAV files are not supported by GoldSrc engine
 - Ensure file is mono (1 channel) at 22050 Hz or 11025 Hz
 - Ensure file is uncompressed PCM WAV, not compressed
-- Try reconverting with: `ffmpeg -i input.mp3 -ar 22050 -ac 1 -sample_fmt s16 papaj2137.wav`
+- Try reconverting with: `ffmpeg -i input.mp3 -ar 11025 -ac 1 -sample_fmt s16 papaj2137v2.wav`
 
 ### Filter disappears on round restart
 - This should not happen with the current version
