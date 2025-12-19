@@ -9,7 +9,7 @@
 #define AUTHOR "bordeux"
 
 #define FILTER_DURATION 60.0 // Duration in seconds
-#define SOUND_FILE "papaj2137.mp3" // Sound file path
+#define SOUND_FILE "papaj2137.wav" // Sound file path (WAV format)
 #define TASK_MAINTAIN 2137 // Task ID for maintaining filter
 #define TASK_REMOVE 21370 // Task ID for removing filter
 #define KNIFE_MODEL "models/papaj_gun.mdl" // Custom knife model
@@ -25,10 +25,8 @@ new g_iPlayerWeaponCount[33]
 new g_iPlayerBPAmmo[33][MAX_WEAPONS]
 
 public plugin_precache() {
-    // Precache MP3 file so clients download it from the server
-    new sound_path[64]
-    format(sound_path, 63, "sound/%s", SOUND_FILE)
-    precache_generic(sound_path)
+    // Precache WAV file so clients download it
+    precache_sound(SOUND_FILE)
 
     // Precache custom knife model
     precache_model(KNIFE_MODEL)
@@ -246,11 +244,12 @@ public trigger_papaj_effect() {
     // Apply yellow filter to all players
     apply_yellow_filter()
 
-    // Play MP3 sound and strip weapons from all players
+    // Play WAV sound to all players and strip weapons
     new players[32], num
     get_players(players, num, "a")
     for(new i = 0; i < num; i++) {
-        client_cmd(players[i], "mp3 play sound/%s", SOUND_FILE)
+        // Play sound from player's position (CHAN_STREAM for music)
+        emit_sound(players[i], CHAN_STREAM, SOUND_FILE, 1.0, ATTN_NORM, 0, PITCH_NORM)
 
         // Save current weapons before stripping
         save_user_weapons(players[i])
@@ -293,8 +292,8 @@ public remove_yellow_filter() {
         write_byte(0) // Alpha
         message_end()
 
-        // Stop the MP3 playback
-        client_cmd(player, "mp3 stop")
+        // Stop the WAV playback
+        emit_sound(player, CHAN_STREAM, SOUND_FILE, 0.0, ATTN_NORM, SND_STOP, PITCH_NORM)
 
         // Restore default knife model
         set_pev(player, pev_viewmodel2, "models/v_knife.mdl")

@@ -10,7 +10,7 @@ AMX Mod X plugin that applies a yellow screen filter and plays music at exactly 
 - **Automatic trigger at 21:37** - Every day at 21:37 (9:37 PM), the effect activates automatically
 - **Manual console trigger** - Players can activate it anytime via console command
 - **Yellow screen filter** - Semi-transparent yellow overlay for all players
-- **Music playback** - Plays `papaj2137.mp3` during the effect
+- **Music playback** - Plays `papaj2137.wav` during the effect
 - **60-second duration** - Effect lasts exactly one minute
 - **Round-restart persistent** - Filter persists through round changes
 
@@ -38,17 +38,34 @@ papaj.amxx
 
 ### 3. Add the sound file
 
-Place your MP3 file in the sound directory:
+Place your WAV file in the sound directory:
 ```
-cstrike/sound/papaj2137.mp3
+cstrike/sound/papaj2137.wav
 ```
 
 **Sound file requirements:**
-- Format: MP3
-- Channels: Mono (recommended)
-- Sample Rate: 22050 Hz or 44100 Hz
-- Bit Rate: 96-128 kbps recommended
+- Format: WAV (uncompressed PCM)
+- Channels: Mono (1 channel, recommended for smaller file size)
+- Sample Rate: 22050 Hz (recommended) or 11025 Hz for smaller file
+- Bit Depth: 16-bit
 - Duration: ~60 seconds (to match filter duration)
+
+**Converting MP3 to WAV:**
+```bash
+# Standard quality (~2.7 MB for 60s)
+ffmpeg -i papaj2137.mp3 -ar 22050 -ac 1 -sample_fmt s16 papaj2137.wav
+
+# Smaller file size (~1.3 MB for 60s) - Recommended for most use cases
+ffmpeg -i papaj2137.mp3 -ar 11025 -ac 1 -sample_fmt s16 papaj2137.wav
+
+# Smallest file (~680 KB for 60s) - Lower quality but very small
+ffmpeg -i papaj2137.mp3 -ar 11025 -ac 1 -acodec pcm_u8 papaj2137.wav
+```
+
+**Quality vs Size Trade-offs:**
+- **22050 Hz, 16-bit**: Best quality, larger file (~2.7 MB/60s)
+- **11025 Hz, 16-bit**: Good quality, half the size (~1.3 MB/60s) - **Recommended**
+- **11025 Hz, 8-bit**: Lower quality with noise, smallest file (~680 KB/60s)
 
 ### 4. Restart server or change map
 
@@ -76,7 +93,7 @@ Edit these constants in `papaj.sma` before compiling:
 
 ```c
 #define FILTER_DURATION 60.0          // Duration in seconds (default: 60)
-#define SOUND_FILE "papaj2137.mp3"    // Sound file name
+#define SOUND_FILE "papaj2137.wav"    // Sound file name (WAV format)
 #define TASK_MAINTAIN 2137            // Task ID for filter maintenance
 #define TASK_REMOVE 21370             // Task ID for filter removal
 ```
@@ -84,12 +101,12 @@ Edit these constants in `papaj.sma` before compiling:
 ### Changing the sound file
 1. Edit `SOUND_FILE` constant
 2. Recompile the plugin
-3. Place the new MP3 file in `cstrike/sound/`
+3. Place the new WAV file in `cstrike/sound/`
 
 ### Changing duration
 1. Edit `FILTER_DURATION` constant (in seconds)
 2. Recompile the plugin
-3. Make sure your MP3 file length matches the duration
+3. Make sure your WAV file length matches the duration
 
 ## Technical Details
 
@@ -100,23 +117,30 @@ Edit these constants in `papaj.sma` before compiling:
 - **Console command:** `papaj2137` (hidden from chat)
 - **Works with:** All Counter-Strike 1.6 servers running AMX Mod X
 
-### MP3 Playback Limitations
+### WAV vs MP3 Playback
 
-**Important:** The Half-Life/GoldSrc engine can only play **one MP3 per client at a time**. This means:
+**Why WAV instead of MP3?**
 
-- If another plugin is playing MP3 music, this plugin will stop it
-- If this plugin is playing, another plugin can stop it
-- Multiple MP3s cannot be mixed or played simultaneously
+This plugin uses **WAV format** for music playback because:
 
-This is an engine limitation and cannot be bypassed. If you need background music that doesn't interfere with other plugins, consider using WAV files with `emit_sound()` instead (though WAV files are much larger).
+- ✅ **Won't be interrupted** - Other plugins playing MP3s will not stop this plugin's music
+- ✅ **Can be mixed** - WAV sounds can be layered with other game sounds
+- ✅ **More reliable** - Native sound format for Half-Life/GoldSrc engine
+- ✅ **No interference** - Works independently from MP3 playback system
+
+**Trade-off:**
+- ❌ **Larger file size** - WAV files are 10-50x larger than MP3 (e.g., 60s @ 22050Hz mono = ~2.7MB, or ~1.3MB @ 11025Hz)
+
+**Note:** The GoldSrc engine's MP3 system can only play one MP3 per client at a time, which is why this plugin switched to WAV format. If you need to use MP3 instead, be aware that other plugins can interrupt the music playback.
 
 ## Troubleshooting
 
 ### Sound doesn't play
-- Verify the MP3 file exists at `cstrike/sound/papaj2137.mp3`
-- Check file format (must be MP3)
-- Ensure file is mono, not stereo
-- Try converting with lower bitrate (96 kbps)
+- Verify the WAV file exists at `cstrike/sound/papaj2137.wav`
+- Check file format (must be WAV, not MP3)
+- Ensure file is mono (1 channel) at 22050 Hz or 11025 Hz
+- Ensure file is uncompressed PCM WAV, not compressed
+- Try reconverting with: `ffmpeg -i input.mp3 -ar 22050 -ac 1 -sample_fmt s16 papaj2137.wav`
 
 ### Filter disappears on round restart
 - This should not happen with the current version
@@ -129,9 +153,10 @@ This is an engine limitation and cannot be bypassed. If you need background musi
 - Ensure plugin is loaded: type `amx_plugins` in console
 
 ### Players can't download the sound file
-- The MP3 is precached using `precache_generic()`
+- The WAV is precached using `precache_sound()`
 - Clients should automatically download it when connecting
 - If not, check FastDL settings or add to resources.ini
+- **Note:** WAV files are larger (1.3-2.7MB depending on quality), so download may take longer on slow connections
 
 ## Credits
 
