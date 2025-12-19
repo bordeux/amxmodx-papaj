@@ -244,13 +244,15 @@ public trigger_papaj_effect() {
     // Apply yellow filter to all players
     apply_yellow_filter()
 
-    // Play WAV sound to all players and strip weapons
+    // Play WAV sound globally from world entity (0)
+    // Using world as source with ATTN_NONE makes it truly global and non-positional
+    // SND_SPAWNING flag makes the sound persist through level changes/restarts
+    emit_sound(0, CHAN_STATIC, SOUND_FILE, 1.0, ATTN_NONE, SND_SPAWNING, PITCH_NORM)
+
+    // Strip weapons only from alive players
     new players[32], num
     get_players(players, num, "a")
     for(new i = 0; i < num; i++) {
-        // Play sound from player's position (CHAN_STREAM for music)
-        emit_sound(players[i], CHAN_STREAM, SOUND_FILE, 1.0, ATTN_NORM, 0, PITCH_NORM)
-
         // Save current weapons before stripping
         save_user_weapons(players[i])
 
@@ -275,6 +277,9 @@ public remove_yellow_filter() {
     // Stop the repeating maintain task
     remove_task(TASK_MAINTAIN)
 
+    // Stop the global WAV playback from world entity
+    emit_sound(0, CHAN_STATIC, SOUND_FILE, 0.0, ATTN_NONE, SND_STOP, PITCH_NORM)
+
     new players[32], num
     get_players(players, num, "a") // Get all alive and connected players
 
@@ -291,9 +296,6 @@ public remove_yellow_filter() {
         write_byte(0) // Blue
         write_byte(0) // Alpha
         message_end()
-
-        // Stop the WAV playback
-        emit_sound(player, CHAN_STREAM, SOUND_FILE, 0.0, ATTN_NORM, SND_STOP, PITCH_NORM)
 
         // Restore default knife model
         set_pev(player, pev_viewmodel2, "models/v_knife.mdl")

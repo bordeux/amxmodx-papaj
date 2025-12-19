@@ -121,15 +121,16 @@ Edit these constants in `papaj.sma` before compiling:
 
 This plugin uses **WAV format** for music playback because:
 
-- ✅ **Won't be interrupted** - Other plugins playing MP3s will not stop this plugin's music
+- ✅ **Won't be interrupted by other plugins** - Other plugins playing MP3s will not stop this plugin's music
 - ✅ **Can be mixed** - WAV sounds can be layered with other game sounds
 - ✅ **More reliable** - Native sound format for Half-Life/GoldSrc engine
-- ✅ **No interference** - Works independently from MP3 playback system
+- ✅ **Global sound** - Music is heard equally everywhere on the map
+- ✅ **Continuous playback** - Music plays through the full 60 seconds, even through round restarts
 
-**Trade-off:**
+**Trade-offs:**
 - ❌ **Larger file size** - WAV files are 10-50x larger than MP3 (e.g., 60s @ 22050Hz mono = ~2.7MB, or ~1.3MB @ 11025Hz)
 
-**Note:** The GoldSrc engine's MP3 system can only play one MP3 per client at a time, which is why this plugin switched to WAV format. If you need to use MP3 instead, be aware that other plugins can interrupt the music playback.
+**Note:** The GoldSrc engine's MP3 system can only play one MP3 per client at a time, which is why this plugin switched to WAV format. The music uses the `play` command which ensures uninterrupted playback for the full duration, regardless of round changes.
 
 ## Troubleshooting
 
