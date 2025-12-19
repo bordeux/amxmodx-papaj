@@ -10,9 +10,9 @@ AMX Mod X plugin that applies a yellow screen filter and plays music at exactly 
 - **Automatic trigger at 21:37** - Every day at 21:37 (9:37 PM), the effect activates automatically
 - **Manual console trigger** - Players can activate it anytime via console command
 - **Yellow screen filter** - Semi-transparent yellow overlay for all players
-- **Music playback** - Plays `papaj2137v2.wav` during the effect
-- **60-second duration** - Effect lasts exactly one minute
-- **Round-restart persistent** - Filter persists through round changes
+- **Global music playback** - Plays `papaj2137v2.wav` heard equally everywhere on the map
+- **60-second duration** - Effect lasts exactly one minute with continuous music
+- **Round-restart persistent** - Both filter and music persist through round changes without interruption
 
 ## Installation
 
@@ -65,6 +65,11 @@ ffmpeg -i papaj2137v2.mp3 -ar 11025 -ac 1 -sample_fmt s16 papaj2137v2.wav
 
 **IMPORTANT:** GoldSrc engine (CS 1.6) requires **16-bit PCM WAV format**. 8-bit WAV files will not work!
 
+**Why WAV?** The plugin uses WAV with global ambient sound to ensure:
+- Music is heard equally loud everywhere (no distance fade)
+- Music continues playing through round restarts
+- Other plugins playing MP3s won't interrupt this music
+
 ### 4. Restart server or change map
 
 ```
@@ -113,6 +118,7 @@ Edit these constants in `papaj.sma` before compiling:
 - **Maintenance interval:** 0.5 seconds (to survive round restarts)
 - **Time check interval:** 30 seconds
 - **Console command:** `papaj2137` (hidden from chat)
+- **Audio playback:** Global ambient sound (world entity, CHAN_STATIC, ATTN_NONE, SND_SPAWNING)
 - **Works with:** All Counter-Strike 1.6 servers running AMX Mod X
 
 ### WAV vs MP3 Playback
@@ -124,13 +130,21 @@ This plugin uses **WAV format** for music playback because:
 - ✅ **Won't be interrupted by other plugins** - Other plugins playing MP3s will not stop this plugin's music
 - ✅ **Can be mixed** - WAV sounds can be layered with other game sounds
 - ✅ **More reliable** - Native sound format for Half-Life/GoldSrc engine
-- ✅ **Global sound** - Music is heard equally everywhere on the map
-- ✅ **Continuous playback** - Music plays through the full 60 seconds, even through round restarts
+- ✅ **True global sound** - Music is heard equally loud everywhere on the map (no distance attenuation)
+- ✅ **Continuous playback** - Music plays uninterrupted for the full 60 seconds, even through round restarts
+- ✅ **Synchronized** - All players hear the music in perfect sync
 
-**Trade-offs:**
+**How it works:**
+The plugin uses `emit_sound()` with these key parameters:
+- **World entity (0)** - Sound source is the map itself, not a player position
+- **CHAN_STATIC** - Static channel for ambient sounds
+- **ATTN_NONE** - No distance attenuation = heard equally everywhere
+- **SND_SPAWNING** - Persists through round restarts
+
+**Trade-off:**
 - ❌ **Larger file size** - WAV files are 10-50x larger than MP3 (e.g., 60s @ 22050Hz mono = ~2.7MB, or ~1.3MB @ 11025Hz)
 
-**Note:** The GoldSrc engine's MP3 system can only play one MP3 per client at a time, which is why this plugin switched to WAV format. The music uses the `play` command which ensures uninterrupted playback for the full duration, regardless of round changes.
+**Note:** The GoldSrc engine's MP3 system can only play one MP3 per client at a time, which is why this plugin switched to WAV format.
 
 ## Troubleshooting
 
@@ -141,6 +155,16 @@ This plugin uses **WAV format** for music playback because:
 - Ensure file is mono (1 channel) at 22050 Hz or 11025 Hz
 - Ensure file is uncompressed PCM WAV, not compressed
 - Try reconverting with: `ffmpeg -i input.mp3 -ar 11025 -ac 1 -sample_fmt s16 papaj2137v2.wav`
+
+### Sound gets quieter when moving away
+- This should NOT happen with the current version
+- The sound uses `ATTN_NONE` which means it's heard equally everywhere
+- If this occurs, ensure you're using the latest version of the plugin
+
+### Sound stops after round restart
+- This should NOT happen with the current version
+- The sound uses `SND_SPAWNING` flag which persists through round restarts
+- If this occurs, check server logs for errors and ensure you're using the latest plugin version
 
 ### Filter disappears on round restart
 - This should not happen with the current version
@@ -161,9 +185,10 @@ This plugin uses **WAV format** for music playback because:
 ## Credits
 
 - **Plugin:** Papaj 21:37
-- **Version:** 1.0
+- **Version:** 2.0 (WAV global ambient sound edition)
 - **Author:** bordeux
 - **Platform:** AMX Mod X
+- **Audio Format:** WAV (16-bit PCM, mono, 11025-22050 Hz)
 
 ## License
 

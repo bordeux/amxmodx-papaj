@@ -5,7 +5,7 @@
 #include <cstrike>
 
 #define PLUGIN "Papaj 21:37"
-#define VERSION "1.0"
+#define VERSION "2.0"
 #define AUTHOR "bordeux"
 
 #define FILTER_DURATION 60.0 // Duration in seconds
